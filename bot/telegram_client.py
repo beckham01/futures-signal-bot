@@ -179,15 +179,15 @@ def _admin_list_text(state_manager: StateManager) -> str:
 
 def _menu_text(actor_is_admin: bool = False, actor_is_owner: bool = False) -> str:
     lines = [
-        "Bot menu",
+        "🤖 Bot menu",
         "",
-        "Access",
+        "🔐 Access",
         "/start CODE - unlock access with a one-time code",
         "/menu - show this command menu",
         "/help - show this command menu",
         "/id - show your Telegram user/chat ID",
         "",
-        "User commands",
+        "📡 User commands",
         "/status - show bot status",
         "/watchlist - show watched symbols and current bias",
         "/lastsignal - show the latest delivered signal",
@@ -196,7 +196,7 @@ def _menu_text(actor_is_admin: bool = False, actor_is_owner: bool = False) -> st
         lines.extend(
             [
                 "",
-                "Admin commands",
+                "🛠️ Admin commands",
                 "/code_create - create a 24-hour one-time access code",
                 "/code_list - list access codes and usage status",
                 "/code_revoke CODE - revoke an unused access code",
@@ -209,7 +209,7 @@ def _menu_text(actor_is_admin: bool = False, actor_is_owner: bool = False) -> st
         lines.extend(
             [
                 "",
-                "Owner-only commands",
+                "👑 Owner-only commands",
                 "/admin_add USER_ID - promote an active user to admin",
                 "/admin_remove USER_ID - remove admin access",
             ]

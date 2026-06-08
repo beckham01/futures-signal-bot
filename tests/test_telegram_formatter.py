@@ -26,11 +26,12 @@ def make_signal():
 
 def test_format_signal_contains_key_levels():
     message = format_signal(make_signal())
-    assert "LONG - BTCUSDT" in message
-    assert "Entry:" in message
-    assert "TP2:" in message
+    assert "🟢 LONG SETUP - BTCUSDT" in message
+    assert "🎯 Entry:" in message
+    assert "🏁 TP2:" in message
     assert "Extended target 1:5.00" in message
-    assert "Strategy:  A+ Trend Pullback" in message
+    assert "🧠 Strategy: A+ Trend Pullback" in message
+    assert "🔥 Confidence: 90/100 [STRONG]" in message
     assert "https://www.tradingview.com/chart/?symbol=BYBIT:BTCUSDT.P" in message
     assert "Not financial advice" in message
 
@@ -39,12 +40,12 @@ def test_format_signal_labels_strategy_b():
     signal = make_signal()
     signal.strategy_name = "strategy_b_daily_momentum"
     message = format_signal(signal)
-    assert "Strategy:  Daily Momentum Continuation" in message
-    assert "Timeframes: 15m momentum breakout" in message
+    assert "🧠 Strategy: Daily Momentum Continuation" in message
+    assert "⏱️ Timeframes: 15m momentum breakout" in message
 
 
 def test_format_status_and_watchlist():
     state = BotState(cooldowns={}, last_signal=None, signals_today=2, last_scan_time=0.0)
     status = format_status(state, {"watchlist": ["BTCUSDT", "ETHUSDT"]})
-    assert "Watching 2 symbols" in status
-    assert "BTCUSDT: Bullish" in format_watchlist({"BTCUSDT": "Bullish"})
+    assert "👀 Watching: 2 symbols" in status
+    assert "🟢 BTCUSDT: Bullish" in format_watchlist({"BTCUSDT": "Bullish"})

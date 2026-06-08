@@ -32,31 +32,33 @@ def strategy_timeframes(strategy_name: str) -> str:
 
 
 def format_signal(signal: SignalEvent) -> str:
-    icon = "[LONG]" if signal.direction == "LONG" else "[SHORT]"
+    icon = "🟢" if signal.direction == "LONG" else "🔴"
+    direction_label = "LONG SETUP" if signal.direction == "LONG" else "SHORT SETUP"
+    confidence_icon = "🔥" if signal.confidence_label == "STRONG" else "⚡" if signal.confidence_label == "HIGH" else "📌"
     lines = [
-        f"{icon} {signal.direction} - {signal.symbol}",
-        "--------------------",
-        f"Entry:    ${signal.entry:.4f} zone",
-        f"SL:       ${signal.stop_loss:.4f} ({_pct(signal.stop_loss, signal.entry, signal.direction):+.2f}%)",
-        f"TP1:      ${signal.tp1:.4f} ({_pct(signal.tp1, signal.entry, signal.direction):+.2f}%) - exit 50%",
-        f"TP2:      ${signal.tp2:.4f} ({_pct(signal.tp2, signal.entry, signal.direction):+.2f}%) - exit 50%",
-        f"R:R:      1 : {signal.risk_reward:.2f}",
-        f"Target:   {signal.target_note or 'Base target'}",
-        "--------------------",
-        f"Strategy:  {strategy_display_name(signal.strategy_name)}",
-        f"Confidence: {signal.confidence} / 100 [{signal.confidence_label}]",
-        f"Timeframes: {strategy_timeframes(signal.strategy_name)}",
-        "Leverage:   5x context (not advice)",
-        f"Chart:      {tradingview_link(signal.symbol)}",
-        "--------------------",
-        "Reasons:",
+        f"{icon} {direction_label} - {signal.symbol}",
+        "━━━━━━━━━━━━━━━━━━━━",
+        f"🎯 Entry: ${signal.entry:.4f} zone",
+        f"🛡️ Stop:  ${signal.stop_loss:.4f} ({_pct(signal.stop_loss, signal.entry, signal.direction):+.2f}%)",
+        f"🥇 TP1:   ${signal.tp1:.4f} ({_pct(signal.tp1, signal.entry, signal.direction):+.2f}%) - close 50%",
+        f"🏁 TP2:   ${signal.tp2:.4f} ({_pct(signal.tp2, signal.entry, signal.direction):+.2f}%) - close 50%",
+        f"⚖️ R:R:   1 : {signal.risk_reward:.2f}",
+        f"🚀 Target: {signal.target_note or 'Base target'}",
+        "━━━━━━━━━━━━━━━━━━━━",
+        f"🧠 Strategy: {strategy_display_name(signal.strategy_name)}",
+        f"{confidence_icon} Confidence: {signal.confidence}/100 [{signal.confidence_label}]",
+        f"⏱️ Timeframes: {strategy_timeframes(signal.strategy_name)}",
+        "⚙️ Leverage context: 5x (not advice)",
+        f"📊 Chart: {tradingview_link(signal.symbol)}",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "✅ Why this fired:",
     ]
-    lines.extend(f"- {reason}" for reason in signal.reasons)
+    lines.extend(f"• {reason}" for reason in signal.reasons)
     lines.extend(
         [
-            "--------------------",
-            f"{signal.timestamp.strftime('%Y-%m-%d %H:%M UTC')}",
-            "Signal only. Not financial advice.",
+            "━━━━━━━━━━━━━━━━━━━━",
+            f"🕒 {signal.timestamp.strftime('%Y-%m-%d %H:%M UTC')}",
+            "Signal only. Manage risk. Not financial advice.",
         ]
     )
     return "\n".join(lines)
@@ -67,12 +69,19 @@ def format_status(state: BotState, config: dict) -> str:
     if state.last_scan_time:
         last_scan = datetime.fromtimestamp(state.last_scan_time, timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     return (
-        f"Bot online. Last scan: {last_scan}. Mode: live.\n"
-        f"Watching {len(config.get('watchlist', []))} symbols. Signals today: {state.signals_today}."
+        f"✅ Bot online\n"
+        f"🕒 Last scan: {last_scan}\n"
+        f"📡 Mode: live\n"
+        f"👀 Watching: {len(config.get('watchlist', []))} symbols\n"
+        f"🔔 Signals today: {state.signals_today}"
     )
 
 
 def format_watchlist(biases: dict[str, str]) -> str:
     if not biases:
-        return "Watchlist is empty."
-    return "\n".join(f"{symbol}: {bias}" for symbol, bias in sorted(biases.items()))
+        return "👀 Watchlist is empty."
+    lines = ["👀 Watchlist bias"]
+    for symbol, bias in sorted(biases.items()):
+        bias_icon = "🟢" if bias.lower() == "bullish" else "🔴" if bias.lower() == "bearish" else "⚪"
+        lines.append(f"{bias_icon} {symbol}: {bias}")
+    return "\n".join(lines)

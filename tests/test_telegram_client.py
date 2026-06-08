@@ -334,7 +334,7 @@ def test_handle_command_help_aliases_menu(tmp_path):
     manager = StateManager(str(tmp_path / "state.json"))
     bootstrap_owner(manager, "100")
     handle_command(Client(), manager, {"watchlist": []}, message("/help", "100"))
-    assert sent[-1].startswith("Bot menu")
+    assert sent[-1].startswith("🤖 Bot menu")
 
 
 def test_handle_command_id_shows_ids_and_role(tmp_path):
