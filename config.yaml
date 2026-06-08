@@ -1,0 +1,74 @@
+watchlist:
+  - BTCUSDT
+  - ETHUSDT
+  - SOLUSDT
+  - BNBUSDT
+  - TONUSDT
+
+strategies:
+  strategy_a_trend_pullback:
+    enabled: true
+  strategy_b_daily_momentum:
+    enabled: true
+
+strategy:
+  trend_timeframe: "60"
+  entry_timeframe: "15"
+  ema_fast: 21
+  ema_slow: 55
+  rsi_period: 14
+  atr_period: 14
+  volume_sma_period: 20
+  volume_spike_threshold: 1.5
+  volume_strong_threshold: 1.5
+  pullback_atr_tolerance: 0.35
+  rsi_long_threshold: 45
+  rsi_short_threshold: 55
+  tp1_atr_multiplier: 2.0
+  tp2_atr_multiplier: 4.5
+  sl_atr_multiplier: 1.5
+  min_risk_reward: 3.0
+  min_confidence: 55
+  atr_max_pct: 0.03
+  atr_min_pct: 0.003
+  extended_targets:
+    enabled: true
+    base_rr: 3.0
+    high_confidence_rr: 5.0
+    high_confidence_min_score: 95
+
+bot:
+  cooldown_hours: 4
+  scan_interval_minutes: 15
+  leverage_context: 5
+  state_file: "state/bot_state.json"
+  enable_telegram_commands: true
+  symbol_scan_pause_seconds: 3.0
+
+backtest:
+  lookback_days: 180
+  cache_dir: "data/cache"
+  bybit_api_base_url: "https://api.bytick.com"
+
+strategy_b:
+  timeframe: "15"
+  ema_slow: 55
+  rsi_period: 14
+  atr_period: 14
+  volume_sma_period: 20
+  volume_spike_threshold: 3.0
+  volume_strong_threshold: 1.6
+  swing_lookback: 48
+  ema_slope_lookback: 5
+  trend_lookback: 48
+  candle_body_min_pct: 0.8
+  candle_body_strong_pct: 0.65
+  breakout_margin_atr: 1.5
+  tp1_risk_multiplier: 1.0
+  tp2_risk_multiplier: 2.5
+  sl_atr_buffer: 0.5
+  min_risk_reward: 2.0
+  min_confidence: 95
+  atr_max_pct: 0.02
+  atr_min_pct: 0.003
+  cooldown_hours: 24

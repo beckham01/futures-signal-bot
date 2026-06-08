@@ -1,0 +1,22 @@
+.env
+state/
+data/cache/
+logs/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated research/backtest artifacts
+backtest_report.txt
+candidate_backtest_report.txt
+candidate_config.yaml
+optimization_analysis.csv
+optimization_analysis_report.txt
+optimize_*.csv
+rr_experiment_report.txt
+rr_experiment_results.csv
+strategy_b_*report.txt
+strategy_b_optimize_*.csv
+strategy_comparison_report.txt

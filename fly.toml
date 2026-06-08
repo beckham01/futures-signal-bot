@@ -1,0 +1,16 @@
+app = "futures-signal-bot"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  LOG_LEVEL = "INFO"
+
+[mounts]
+  source = "bot_state"
+  destination = "/app/state"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
