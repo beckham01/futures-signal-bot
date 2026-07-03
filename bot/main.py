@@ -14,6 +14,7 @@ from backtest.strategy import load_config
 from bot.scanner import scan_loop
 from bot.state_manager import StateManager
 from bot.telegram_client import run as telegram_run
+from bot.weekly_report import scheduled_report_loop
 
 
 def load_environment() -> None:
@@ -48,6 +49,7 @@ async def main():
     tasks = [
         asyncio.create_task(scan_loop(queue, config)),
         asyncio.create_task(telegram_run(queue, config, state_manager)),
+        asyncio.create_task(scheduled_report_loop(config, state_manager)),
     ]
     await stop_event.wait()
     for task in tasks:

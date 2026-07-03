@@ -263,6 +263,14 @@ strategy's rolling win rate over its most recent 15+ trades drops more than 15
 percentage points below its backtested target (Strategy B ~62%, Strategy C
 ~68%), so position sizing decisions can be reviewed before scaling up.
 
+This also runs **automatically** inside the live bot process: `bot/main.py`
+schedules `scheduled_report_loop` alongside the scanner and Telegram consumer,
+running the same report + alert logic once ~5 minutes after startup and then
+every `bot.report_interval_hours` (config.yaml, default 24h). No separate cron
+job or fly.io scheduled machine is needed - it's just another asyncio task in
+the always-on process. A failure in this loop is logged and swallowed; it can
+never crash live scanning.
+
 ### Recalibration: live/paper vs backtest (human-reviewed, never automatic)
 
 ```bash

@@ -49,6 +49,7 @@ bot:
   state_file: "state/bot_state.json"
   enable_telegram_commands: true
   symbol_scan_pause_seconds: 3.0
+  report_interval_hours: 24
 
 backtest:
   lookback_days: 180
