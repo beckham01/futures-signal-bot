@@ -1,0 +1,97 @@
+=== BACKTEST REPORT ===
+Period: 2026-01-03 to 2026-07-03
+Symbols: BTCUSDT, ETHUSDT, SOLUSDT, XRPUSDT, BNBUSDT, ADAUSDT, DOGEUSDT, LINKUSDT, AVAXUSDT, TONUSDT
+
+--- SIGNAL SUMMARY ---
+Total signals generated: 46
+  Long signals: 13
+  Short signals: 33
+  Filtered by confidence (<55): 0
+  Filtered by R:R (<3): 0
+  Final signals evaluated: 46
+
+--- OUTCOME DISTRIBUTION ---
+TP2 hit (full winner):     18  (39%)
+TP1 only (breakeven+):     8  (17%)
+Stop hit (full loss):      20  (43%)
+Open / unresolved:         0  (0%)
+
+--- PERFORMANCE METRICS ---
+Win rate (TP1 or better):  57%
+Full win rate (TP2 hit):   39%
+Average R per trade:       0.96
+Total R if 1% risk/trade:  44.00%
+Max consecutive losses:    5
+Average bars held:         16 (4.1h)
+
+--- BY SYMBOL ---
+BTCUSDT: 17 trades | Win rate 47% | Avg R 0.69
+ETHUSDT: 5 trades | Win rate 60% | Avg R 1.04
+SOLUSDT: 14 trades | Win rate 43% | Avg R 0.29
+XRPUSDT: 0 trades | Win rate 0% | Avg R 0.00
+BNBUSDT: 0 trades | Win rate 0% | Avg R 0.00
+ADAUSDT: 0 trades | Win rate 0% | Avg R 0.00
+DOGEUSDT: 10 trades | Win rate 90% | Avg R 2.30
+LINKUSDT: 0 trades | Win rate 0% | Avg R 0.00
+AVAXUSDT: 0 trades | Win rate 0% | Avg R 0.00
+TONUSDT: 0 trades | Win rate 0% | Avg R 0.00
+
+--- BY DIRECTION ---
+LONG: 13 trades | Win rate 46% | Avg R 0.75
+SHORT: 33 trades | Win rate 61% | Avg R 1.04
+
+--- BY MONTH ---
+2026-01: 3 trades | Win rate 67% | Avg R 1.80
+2026-02: 11 trades | Win rate 64% | Avg R 0.80
+2026-03: 3 trades | Win rate 33% | Avg R 0.40
+2026-04: 11 trades | Win rate 45% | Avg R 0.69
+2026-05: 11 trades | Win rate 73% | Avg R 1.84
+2026-06: 6 trades | Win rate 50% | Avg R 0.30
+2026-07: 1 trades | Win rate 0% | Avg R -1.00
+
+--- BY CONFIDENCE LABEL ---
+STRONG  (85+): 3 trades | Win rate 33% | Avg R 0.40
+HIGH   (70-84): 23 trades | Win rate 57% | Avg R 1.06
+MODERATE(55-69): 20 trades | Win rate 60% | Avg R 0.92
+
+--- BY CONFIDENCE SCORE BUCKET ---
+95-100: 3 trades | Win rate 33% | Avg R 0.40
+85-94: 10 trades | Win rate 60% | Avg R 1.04
+75-84: 13 trades | Win rate 54% | Avg R 1.08
+65-74: 16 trades | Win rate 56% | Avg R 0.76
+55-64: 4 trades | Win rate 75% | Avg R 1.55
+<55: 0 trades | Win rate 0% | Avg R 0.00
+
+--- BY CONFIDENCE CONDITION TRUE ---
+ema_slopes_aligned: 44 trades | Win rate 57% | Avg R 0.95
+fresh_breaker: 43 trades | Win rate 56% | Avg R 0.95
+healthy_rsi: 42 trades | Win rate 55% | Avg R 0.90
+large_fvg: 19 trades | Win rate 58% | Avg R 1.05
+strong_rejection_body: 19 trades | Win rate 53% | Avg R 0.96
+
+--- SIGNAL LOG (last 20) ---
+2026-04-24 16:00:00+00:00 | BTCUSDT | LONG | Confidence: 65 | Outcome: STOP_HIT | R: -1.00
+2026-04-28 08:00:00+00:00 | DOGEUSDT | LONG | Confidence: 80 | Outcome: TP2_HIT | R: 3.20
+2026-05-12 00:00:00+00:00 | SOLUSDT | LONG | Confidence: 65 | Outcome: STOP_HIT | R: -1.00
+2026-05-14 04:00:00+00:00 | ETHUSDT | SHORT | Confidence: 80 | Outcome: STOP_HIT | R: -1.00
+2026-05-14 12:00:00+00:00 | SOLUSDT | LONG | Confidence: 75 | Outcome: STOP_HIT | R: -1.00
+2026-05-21 12:00:00+00:00 | ETHUSDT | SHORT | Confidence: 85 | Outcome: TP1_ONLY | R: 0.80
+2026-05-22 04:00:00+00:00 | ETHUSDT | SHORT | Confidence: 85 | Outcome: TP2_HIT | R: 3.20
+2026-05-26 08:00:00+00:00 | SOLUSDT | SHORT | Confidence: 65 | Outcome: TP2_HIT | R: 3.20
+2026-05-27 04:00:00+00:00 | DOGEUSDT | SHORT | Confidence: 65 | Outcome: TP2_HIT | R: 3.20
+2026-05-27 20:00:00+00:00 | DOGEUSDT | SHORT | Confidence: 65 | Outcome: TP2_HIT | R: 3.20
+2026-05-30 12:00:00+00:00 | BTCUSDT | SHORT | Confidence: 80 | Outcome: TP2_HIT | R: 3.20
+2026-05-31 00:00:00+00:00 | BTCUSDT | SHORT | Confidence: 85 | Outcome: TP2_HIT | R: 3.20
+2026-05-31 12:00:00+00:00 | BTCUSDT | SHORT | Confidence: 85 | Outcome: TP2_HIT | R: 3.20
+2026-06-01 04:00:00+00:00 | BTCUSDT | SHORT | Confidence: 80 | Outcome: TP2_HIT | R: 3.20
+2026-06-25 20:00:00+00:00 | SOLUSDT | SHORT | Confidence: 65 | Outcome: STOP_HIT | R: -1.00
+2026-06-27 08:00:00+00:00 | DOGEUSDT | SHORT | Confidence: 65 | Outcome: TP1_ONLY | R: 0.80
+2026-06-28 00:00:00+00:00 | BTCUSDT | SHORT | Confidence: 85 | Outcome: TP1_ONLY | R: 0.80
+2026-06-28 12:00:00+00:00 | BTCUSDT | SHORT | Confidence: 100 | Outcome: STOP_HIT | R: -1.00
+2026-06-30 00:00:00+00:00 | BTCUSDT | SHORT | Confidence: 80 | Outcome: STOP_HIT | R: -1.00
+2026-07-01 04:00:00+00:00 | DOGEUSDT | SHORT | Confidence: 65 | Outcome: STOP_HIT | R: -1.00
+
+--- STRATEGY C ACCEPTANCE ---
+Trades/week: 1.78
+Verdict: FAIL
+Reason: trades/week 1.78 outside 2-6

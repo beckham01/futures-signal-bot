@@ -213,3 +213,67 @@ State is stored at `state/bot_state.json` so cooldowns survive restarts.
 ## Disclaimer
 
 Signals are for research only and are not financial advice.
+
+## Strategy B/C Filter & Regime Policy
+
+- **Strategy B** (`strategy_b_fvg_breaker_15m`) runs with **whitelist + shorts-only +
+  BTC-regime-trending-only**. Configured in `config/strategy_filters.py`
+  (`STRATEGY_B_WHITELIST`, `STRATEGY_B_DIRECTIONS_ALLOWED`) and
+  `backtest/regime.py` (`is_btc_regime_trending`).
+- **Strategy C** (`strategy_c_fvg_breaker_4h`) runs with **whitelist + shorts-and-longs
+  and NO regime filter**. Configured the same way in `config/strategy_filters.py`,
+  but never calls into `backtest/regime.py`.
+
+**Do not make these consistent.** Regime filtering was tested against historical
+Strategy C trades and it reduced both win rate and total R there: it strips out
+DOGEUSDT's wins, which occur independent of market regime. DOGEUSDT is a
+small-sample, high-impact symbol for Strategy C (10 backtest trades at time of
+writing) - see `python -m backtest.weekly_report` for ongoing monitoring of
+whether that edge is holding up or degrading in live/paper trading.
+
+### Symbol/direction filters
+
+Both strategies reject a signal before it is emitted if the symbol is not in
+that strategy's whitelist, or the direction is not in that strategy's allowed
+directions. Rejections are logged at DEBUG level with reason
+`symbol_not_whitelisted` or `direction_filtered`. Strategy B additionally
+rejects with reason `regime_chop` when BTC is not currently "net-trending".
+
+### Live/paper telemetry and monitoring
+
+Every live-scanned Strategy B/C signal is recorded to
+`logs/live_trade_telemetry.csv` (or `logs/paper_trade_telemetry.csv` when
+`PAPER_TRADING_MODE` is enabled) via `bot/telemetry.py`. Set
+`PAPER_TRADING_MODE=true` in the environment to route telemetry to the paper
+log instead of the live log; the signal pipeline (filters, regime gate)
+behaves identically either way - there is no separate simulated order
+execution path today, since the bot only delivers Telegram alerts.
+
+Run the weekly rollup:
+
+```bash
+python -m backtest.weekly_report --telemetry-path logs/live_trade_telemetry.csv
+python -m bot.weekly_report  # also alerts admins on Telegram
+```
+
+This resolves each recorded signal's outcome against fresh candle data (reusing
+the backtest simulator), then reports rolling win rate and total R per symbol
+and direction per strategy. It also warns (log + Telegram to admins) if either
+strategy's rolling win rate over its most recent 15+ trades drops more than 15
+percentage points below its backtested target (Strategy B ~62%, Strategy C
+~68%), so position sizing decisions can be reviewed before scaling up.
+
+### Recalibration: live/paper vs backtest (human-reviewed, never automatic)
+
+```bash
+python -m backtest.weekly_report --telemetry-path logs/live_trade_telemetry.csv --backtest-log-path strategy_b_trade_log.csv
+```
+
+Adding `--backtest-log-path` prints a per-symbol/direction table comparing live
+win rate against the original backtest's win rate for the same symbol and
+direction, so drift is easy to spot early (e.g. DOGEUSDT's edge weakening under
+Strategy C). This is a **read-only recalibration aid** - it never writes back
+to `config.yaml` or `config/strategy_filters.py`. Any threshold or whitelist
+change stays a manual step: review the numbers, re-run the relevant backtest
+with the candidate change, and only then update the config, the same review
+discipline `candidate_config.yaml` already uses elsewhere in this project.

@@ -1,4 +1,4 @@
-"""CLI entry point for Strategy B backtests."""
+"""CLI entry point for Strategy C backtests."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 from backtest.data_fetcher import BybitDataError, CacheDataError, fetch_all_symbols, set_data_source
-from backtest.report import generate_report_b, strategy_b_acceptance
+from backtest.report import generate_report_c, strategy_c_acceptance
 from backtest.simulator import simulate_all
 from backtest.strategy import load_config
-from backtest.strategy_b import compute_indicators_b, evaluate_signals_b
+from backtest.strategy_c import compute_indicators_c, evaluate_signals_c
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run Strategy B FVG/breaker backtest.")
+    parser = argparse.ArgumentParser(description="Run Strategy C 4h FVG/breaker backtest.")
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--symbols", nargs="+")
     parser.add_argument("--days", type=int)
@@ -27,43 +27,35 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     config = load_config(args.config)
-    symbols = args.symbols or cfg_symbols(config, "strategy_b")
+    cfg = config["strategy_c"]
+    symbols = args.symbols or list(cfg.get("symbols") or config["watchlist"])
     days = args.days or int(config["backtest"]["lookback_days"])
-    cfg = config["strategy_b"]
-    entry_tf = cfg["timeframe_entry"]
-    trend_tf = cfg["timeframe_trend"]
+    interval = cfg["timeframe_entry"]
     set_data_source(
         api_base_url=args.api_base_url or config["backtest"].get("bybit_api_base_url"),
         cache_dir=args.cache_dir or config["backtest"].get("cache_dir"),
     )
-
     try:
-        data = fetch_all_symbols(symbols, [entry_tf, trend_tf], days, cache_only=args.cache_only)
+        data = fetch_all_symbols(symbols, [interval], days, cache_only=args.cache_only)
     except (BybitDataError, CacheDataError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
     all_signals = []
     for symbol in symbols:
-        df_15m, df_1h = compute_indicators_b(data[symbol][entry_tf], data[symbol][trend_tf], cfg)
-        data[symbol][entry_tf] = df_15m
-        data[symbol][trend_tf] = df_1h
-        data[symbol]["15"] = df_15m
-        all_signals.extend(evaluate_signals_b(symbol, df_15m, df_1h, cfg["cooldown_hours"], cfg))
+        df_4h = compute_indicators_c(data[symbol][interval], cfg)
+        data[symbol][interval] = df_4h
+        all_signals.extend(evaluate_signals_c(symbol, df_4h, cfg["cooldown_hours"], cfg))
 
     results = simulate_all(all_signals, data)
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=days)
-    generate_report_b(results, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), symbols, days)
-    passed, failures = strategy_b_acceptance(results, days)
+    generate_report_c(results, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), symbols, days)
+    passed, failures = strategy_c_acceptance(results, days)
     if not passed:
-        print(f"Strategy B gate failed: {'; '.join(failures)}", file=sys.stderr)
+        print(f"Strategy C gate failed: {'; '.join(failures)}", file=sys.stderr)
         return 1
     return 0
-
-
-def cfg_symbols(config: dict, key: str) -> list[str]:
-    return list(config.get(key, {}).get("symbols") or config["watchlist"])
 
 
 if __name__ == "__main__":

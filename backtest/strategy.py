@@ -33,6 +33,9 @@ class SignalEvent:
     target_rr: float | None = None
     target_note: str = ""
     strategy_name: str = "strategy_a_trend_pullback"
+    execution_timeframe: str = "15"
+    tp1_position_pct: float = 0.5
+    tp2_position_pct: float = 0.5
 
 
 def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> dict[str, Any]:

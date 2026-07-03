@@ -15,7 +15,14 @@ from backtest.data_fetcher import BybitDataError, CacheDataError, fetch_all_symb
 from backtest.report import _max_consecutive_losses
 from backtest.simulator import TradeResult, simulate_all
 from backtest.strategy import load_config
-from backtest.strategy_b import STRATEGY_NAME, compute_confidence_b, compute_indicators_b, evaluate_signals_b, get_swing_high, get_swing_low
+from backtest.strategy_b_baseline import (
+    STRATEGY_NAME,
+    compute_confidence_b,
+    compute_indicators_b,
+    evaluate_signals_b,
+    get_swing_high,
+    get_swing_low,
+)
 from backtest.strategy import SignalEvent
 
 

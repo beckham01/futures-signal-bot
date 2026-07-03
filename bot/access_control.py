@@ -78,6 +78,22 @@ def active_recipient_chat_ids(state_manager: StateManager) -> list[str]:
     return chat_ids
 
 
+def active_admin_chat_ids(state_manager: StateManager) -> list[str]:
+    """Return active admin/owner chat IDs (for alerting, e.g. win-rate warnings)."""
+    chat_ids = []
+    seen = set()
+    for admin_id, admin in state_manager.state.admins.items():
+        if not admin.get("active"):
+            continue
+        user = state_manager.state.users.get(admin_id, {})
+        chat_id = str(user.get("chat_id", admin_id))
+        if chat_id in seen:
+            continue
+        seen.add(chat_id)
+        chat_ids.append(chat_id)
+    return chat_ids
+
+
 def generate_code(length: int = 8) -> str:
     alphabet = string.ascii_uppercase + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))

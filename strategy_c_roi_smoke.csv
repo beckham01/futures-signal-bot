@@ -1,0 +1,3 @@
+accepted,score,timeframe_entry,min_confidence,cooldown_hours,fvg_min_gap_atr,candle_body_min_pct,tp1_risk_multiplier,tp2_risk_multiplier,tp1_position_pct,tp2_position_pct,metrics_trades,metrics_roi100_hit_rate,metrics_roi200_hit_rate,metrics_total_expectancy_r,metrics_avg_expectancy_r,metrics_max_consecutive_roi100_failures,metrics_avg_bars_to_roi100
+False,-9999,240,80,24,1.0,0.6,1.0,2.0,0.8,0.2,0,0.0,0.0,0,0.0,0,0.0
+False,-9999,240,80,24,1.5,0.6,1.0,2.0,0.8,0.2,0,0.0,0.0,0,0.0,0,0.0

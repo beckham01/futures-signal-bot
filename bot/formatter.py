@@ -21,6 +21,8 @@ def strategy_display_name(strategy_name: str) -> str:
     names = {
         "strategy_a_trend_pullback": "A+ Trend Pullback",
         "strategy_b_daily_momentum": "Daily Momentum Continuation",
+        "strategy_b_fvg_breaker_15m": "15m FVG + Breaker",
+        "strategy_c_fvg_breaker_4h": "4h FVG + Breaker",
     }
     return names.get(strategy_name, strategy_name)
 
@@ -28,6 +30,10 @@ def strategy_display_name(strategy_name: str) -> str:
 def strategy_timeframes(strategy_name: str) -> str:
     if strategy_name == "strategy_b_daily_momentum":
         return "15m momentum breakout"
+    if strategy_name == "strategy_b_fvg_breaker_15m":
+        return "1h trend + 15m FVG/breaker"
+    if strategy_name == "strategy_c_fvg_breaker_4h":
+        return "4h FVG/breaker"
     return "1h trend + 15m entry"
 
 

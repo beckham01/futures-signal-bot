@@ -36,3 +36,17 @@ def test_combine_results_drops_strategy_b_conflict_with_strategy_a():
     assert len(combined) == 2
     assert len(conflicts) == 1
     assert {item.signal.symbol for item in combined} == {"BTCUSDT", "ETHUSDT"}
+
+
+def test_combine_results_strategy_c_takes_priority():
+    a = [result("BTCUSDT", "2026-01-01T00:30:00Z", "strategy_a_trend_pullback")]
+    b = [result("ETHUSDT", "2026-01-01T00:30:00Z", "strategy_b_fvg_breaker_15m")]
+    c = [
+        result("BTCUSDT", "2026-01-01T00:00:00Z", "strategy_c_fvg_breaker_4h"),
+        result("ETHUSDT", "2026-01-01T00:00:00Z", "strategy_c_fvg_breaker_4h"),
+    ]
+
+    combined, conflicts = combine_results(a, b, c)
+
+    assert {item.signal.strategy_name for item in combined} == {"strategy_c_fvg_breaker_4h"}
+    assert len(conflicts) == 2

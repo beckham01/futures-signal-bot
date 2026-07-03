@@ -4,11 +4,16 @@ watchlist:
   - SOLUSDT
   - BNBUSDT
   - TONUSDT
+  - ATOMUSDT
+  - INJUSDT
+  - DOGEUSDT
 
 strategies:
   strategy_a_trend_pullback:
     enabled: true
-  strategy_b_daily_momentum:
+  strategy_b_fvg_breaker_15m:
+    enabled: true
+  strategy_c_fvg_breaker_4h:
     enabled: true
 
 strategy:
@@ -50,25 +55,92 @@ backtest:
   cache_dir: "data/cache"
   bybit_api_base_url: "https://api.bytick.com"
 
+roi:
+  leverage: 5
+  target_tiers:
+    - 100
+    - 200
+    - 300
+    - 400
+    - 500
+
 strategy_b:
-  timeframe: "15"
+  name: "strategy_b_fvg_breaker_15m"
+  enabled: true
+  timeframe_entry: "15"
+  timeframe_trend: "60"
+  symbols:
+    - BTCUSDT
+    - ETHUSDT
+    - SOLUSDT
+    - XRPUSDT
+    - BNBUSDT
+    - ADAUSDT
+    - DOGEUSDT
+    - LINKUSDT
+    - AVAXUSDT
+    - TONUSDT
+    - DOTUSDT
+    - UNIUSDT
+    - ATOMUSDT
+    - LTCUSDT
+    - NEARUSDT
+    - APTUSDT
+    - ARBUSDT
+    - OPUSDT
+    - INJUSDT
+    - SUIUSDT
+    - TIAUSDT
+  ema_fast: 21
   ema_slow: 55
   rsi_period: 14
   atr_period: 14
   volume_sma_period: 20
-  volume_spike_threshold: 3.0
-  volume_strong_threshold: 1.6
-  swing_lookback: 48
-  ema_slope_lookback: 5
-  trend_lookback: 48
-  candle_body_min_pct: 0.8
-  candle_body_strong_pct: 0.65
-  breakout_margin_atr: 1.5
-  tp1_risk_multiplier: 1.0
+  fvg_min_gap_atr: 0.2
+  fvg_max_age_candles: 48
+  breaker_confirm_candles: 3
+  breaker_max_age_candles: 96
+  sl_atr_buffer: 0.3
+  tp1_risk_multiplier: 1.5
   tp2_risk_multiplier: 2.5
-  sl_atr_buffer: 0.5
   min_risk_reward: 2.0
-  min_confidence: 95
-  atr_max_pct: 0.02
+  min_confidence: 50
+  candle_body_min_pct: 0.40
+  atr_max_pct: 0.04
   atr_min_pct: 0.003
   cooldown_hours: 24
+
+strategy_c:
+  name: "strategy_c_fvg_breaker_4h"
+  enabled: true
+  timeframe_entry: "240"
+  symbols:
+    - BTCUSDT
+    - ETHUSDT
+    - SOLUSDT
+    - XRPUSDT
+    - BNBUSDT
+    - ADAUSDT
+    - DOGEUSDT
+    - LINKUSDT
+    - AVAXUSDT
+    - TONUSDT
+  ema_fast: 21
+  ema_slow: 55
+  rsi_period: 14
+  atr_period: 14
+  fvg_min_gap_atr: 0.3
+  fvg_max_age_candles: 48
+  breaker_confirm_candles: 3
+  breaker_max_age_candles: 96
+  sl_atr_buffer: 0.5
+  tp1_risk_multiplier: 2.0
+  tp2_risk_multiplier: 4.0
+  tp1_position_pct: 0.40
+  tp2_position_pct: 0.60
+  min_risk_reward: 3.0
+  min_confidence: 60
+  candle_body_min_pct: 0.45
+  atr_max_pct: 0.06
+  atr_min_pct: 0.005
+  cooldown_hours: 12

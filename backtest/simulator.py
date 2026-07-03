@@ -25,13 +25,17 @@ def reward_r(entry: float, target: float, risk: float) -> float:
 
 
 def partial_tp1_r(signal: SignalEvent, risk: float) -> float:
-    """Half position exits at TP1; the other half is protected at breakeven."""
-    return round(0.5 * reward_r(signal.entry, signal.tp1, risk), 3)
+    """Configured TP1 position exits; the remainder is protected at breakeven."""
+    return round(signal.tp1_position_pct * reward_r(signal.entry, signal.tp1, risk), 3)
 
 
 def blended_tp2_r(signal: SignalEvent, risk: float) -> float:
-    """Half position exits at TP1 and half exits at TP2."""
-    return round(0.5 * reward_r(signal.entry, signal.tp1, risk) + 0.5 * reward_r(signal.entry, signal.tp2, risk), 3)
+    """Configured portions exit at TP1 and TP2."""
+    return round(
+        signal.tp1_position_pct * reward_r(signal.entry, signal.tp1, risk)
+        + signal.tp2_position_pct * reward_r(signal.entry, signal.tp2, risk),
+        3,
+    )
 
 
 def simulate_trade(signal: SignalEvent, future_candles: pd.DataFrame) -> TradeResult:
@@ -89,7 +93,8 @@ def simulate_all(
     """Run trade simulation for all signals."""
     results: list[TradeResult] = []
     for signal in signals:
-        df_15m = data[signal.symbol]["15"]
-        future = df_15m[pd.to_datetime(df_15m["timestamp"], utc=True) > signal.timestamp]
+        timeframe = getattr(signal, "execution_timeframe", "15")
+        df = data[signal.symbol][timeframe]
+        future = df[pd.to_datetime(df["timestamp"], utc=True) > signal.timestamp]
         results.append(simulate_trade(signal, future))
     return results

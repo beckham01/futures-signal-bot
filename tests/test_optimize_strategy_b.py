@@ -10,9 +10,65 @@ from backtest.optimize_strategy_b import (
     score_candidate,
     walk_forward_bounds,
 )
-from tests.test_strategy_b import cfg as strategy_b_test_cfg, frame
 from backtest.simulator import TradeResult
 from backtest.strategy import SignalEvent
+
+
+def strategy_b_test_cfg(**overrides):
+    base = {
+        "timeframe": "15",
+        "ema_slow": 55,
+        "rsi_period": 14,
+        "atr_period": 14,
+        "volume_sma_period": 20,
+        "volume_spike_threshold": 1.3,
+        "volume_strong_threshold": 1.6,
+        "swing_lookback": 8,
+        "ema_slope_lookback": 5,
+        "candle_body_min_pct": 0.5,
+        "candle_body_strong_pct": 0.65,
+        "breakout_margin_atr": 0.3,
+        "tp1_risk_multiplier": 1.5,
+        "tp2_risk_multiplier": 2.5,
+        "sl_atr_buffer": 0.5,
+        "min_risk_reward": 2.0,
+        "min_confidence": 50,
+        "atr_max_pct": 0.04,
+        "atr_min_pct": 0.003,
+        "cooldown_hours": 4,
+    }
+    base.update(overrides)
+    return base
+
+
+def frame():
+    periods = 14
+    idx = 10
+    timestamps = pd.date_range("2026-01-01T00:00:00Z", periods=periods, freq="15min")
+    close = [100.0 + i * 0.04 for i in range(periods)]
+    open_ = [value - 0.1 for value in close]
+    high = [value + 0.2 for value in close]
+    low = [value - 0.2 for value in close]
+    close[idx] = max(high[idx - 8 : idx]) + 0.6
+    open_[idx] = close[idx] - 0.8
+    high[idx] = close[idx] + 0.1
+    low[idx] = close[idx] - 1.0
+    return pd.DataFrame(
+        {
+            "timestamp": timestamps,
+            "open": open_,
+            "high": high,
+            "low": low,
+            "close": close,
+            "volume": [100.0] * idx + [180.0] + [100.0] * (periods - idx - 1),
+            "ema55": [99.0 + i * 0.02 for i in range(periods)],
+            "ema55_slope": [0.02] * periods,
+            "rsi14": [52.0] * idx + [62.0] + [52.0] * (periods - idx - 1),
+            "atr14": [1.0] * periods,
+            "volume_sma20": [100.0] * periods,
+            "atr_expanding": [True] * periods,
+        }
+    )
 
 
 def make_result(symbol="BTCUSDT", outcome="TP2_HIT", pnl_r=2.0, timestamp="2026-01-01T00:00:00Z"):
@@ -74,7 +130,7 @@ def test_strategy_b_strict_grid_is_more_selective_than_default():
 
 
 def test_fast_candidate_evaluation_returns_strategy_b_signal():
-    data = frame("LONG")
+    data = frame()
     config = strategy_b_test_cfg()
     candidates = {"BTCUSDT": build_candidates_for_symbol("BTCUSDT", data, config)}
     signals = evaluate_candidates_fast(candidates, ["BTCUSDT"], config)

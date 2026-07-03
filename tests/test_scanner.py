@@ -42,10 +42,10 @@ async def test_scan_once_enqueues_signals(monkeypatch):
         "watchlist": ["BTCUSDT"],
         "strategies": {
             "strategy_a_trend_pullback": {"enabled": True},
-            "strategy_b_daily_momentum": {"enabled": False},
+            "strategy_b_fvg_breaker_15m": {"enabled": False},
         },
         "strategy": {"entry_timeframe": "15", "trend_timeframe": "60"},
-        "strategy_b": {"timeframe": "15", "cooldown_hours": 24},
+        "strategy_b": {"timeframe_entry": "15", "timeframe_trend": "60", "cooldown_hours": 4},
         "bot": {"cooldown_hours": 4, "symbol_scan_pause_seconds": 0},
         "backtest": {"bybit_api_base_url": "https://example.test", "cache_dir": "data/cache"},
     }
@@ -85,10 +85,10 @@ async def test_scan_once_paces_between_recent_fetches(monkeypatch):
         "watchlist": ["BTCUSDT", "ETHUSDT"],
         "strategies": {
             "strategy_a_trend_pullback": {"enabled": True},
-            "strategy_b_daily_momentum": {"enabled": False},
+            "strategy_b_fvg_breaker_15m": {"enabled": False},
         },
         "strategy": {"entry_timeframe": "15", "trend_timeframe": "60"},
-        "strategy_b": {"timeframe": "15", "cooldown_hours": 24},
+        "strategy_b": {"timeframe_entry": "15", "timeframe_trend": "60", "cooldown_hours": 4},
         "bot": {"cooldown_hours": 4, "symbol_scan_pause_seconds": 1.5},
         "backtest": {"bybit_api_base_url": "https://example.test", "cache_dir": "data/cache"},
     }
@@ -105,7 +105,7 @@ async def test_scan_once_enqueues_strategy_b_when_enabled(monkeypatch):
         symbol = "BTCUSDT"
         direction = "LONG"
         timestamp = pd.Timestamp("2026-01-01T00:30:00Z")
-        strategy_name = "strategy_b_daily_momentum"
+        strategy_name = "strategy_b_fvg_breaker_15m"
 
     def fake_fetch_recent(symbol, interval, limit=100):
         return pd.DataFrame(
@@ -120,16 +120,16 @@ async def test_scan_once_enqueues_strategy_b_when_enabled(monkeypatch):
         )
 
     monkeypatch.setattr("bot.scanner.fetch_recent_klines", fake_fetch_recent)
-    monkeypatch.setattr("bot.scanner.compute_indicators_b", lambda df_15m, cfg: df_15m)
+    monkeypatch.setattr("bot.scanner.compute_indicators_b", lambda df_15m, df_1h, cfg: (df_15m, df_1h))
     monkeypatch.setattr("bot.scanner.evaluate_signals_b", lambda *args, **kwargs: [Signal()])
     config = {
         "watchlist": ["BTCUSDT"],
         "strategies": {
             "strategy_a_trend_pullback": {"enabled": False},
-            "strategy_b_daily_momentum": {"enabled": True},
+            "strategy_b_fvg_breaker_15m": {"enabled": True},
         },
         "strategy": {"entry_timeframe": "15", "trend_timeframe": "60"},
-        "strategy_b": {"timeframe": "15", "cooldown_hours": 24},
+        "strategy_b": {"timeframe_entry": "15", "timeframe_trend": "60", "cooldown_hours": 4},
         "bot": {"cooldown_hours": 4, "symbol_scan_pause_seconds": 0},
         "backtest": {"bybit_api_base_url": "https://example.test", "cache_dir": "data/cache"},
     }
@@ -137,7 +137,7 @@ async def test_scan_once_enqueues_strategy_b_when_enabled(monkeypatch):
     emitted = await scan_once(async_queue, config)
 
     assert emitted == 1
-    assert (await async_queue.get()).strategy_name == "strategy_b_daily_momentum"
+    assert (await async_queue.get()).strategy_name == "strategy_b_fvg_breaker_15m"
 
 
 def test_strategy_b_conflicts_with_nearby_strategy_a_signal():
@@ -149,5 +149,5 @@ def test_strategy_b_conflicts_with_nearby_strategy_a_signal():
             self.timestamp = pd.Timestamp(timestamp)
 
     strategy_a = [Signal("strategy_a_trend_pullback", "2026-01-01T00:00:00Z")]
-    strategy_b = Signal("strategy_b_daily_momentum", "2026-01-01T00:30:00Z")
+    strategy_b = Signal("strategy_b_fvg_breaker_15m", "2026-01-01T00:30:00Z")
     assert strategy_conflicts_with_a(strategy_b, strategy_a) is True

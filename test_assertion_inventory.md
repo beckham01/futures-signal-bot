@@ -1,0 +1,513 @@
+# Test Assertion Inventory
+
+Total collected tests: 149
+## tests/test_access_control.py
+- `test_bootstrap_owner_from_env_chat_id`
+  - `assert is_owner(manager, "100")`
+  - `assert is_admin(manager, "100")`
+  - `assert active_recipient_chat_ids(manager) == ["100"]`
+- `test_one_time_code_activates_exactly_one_user`
+  - `assert ok is True`
+  - `assert ok is False`
+  - `assert "already been used" in message`
+- `test_used_expired_and_revoked_codes_are_rejected`
+  - `assert ok is False`
+  - `assert "expired" in message`
+  - `assert revoke_access_code(manager, revoked, "100") is True`
+  - `assert ok is False`
+  - `assert "revoked" in message`
+- `test_kicked_users_stop_being_active`
+  - `assert "200" in active_recipient_chat_ids(manager)`
+  - `assert kick_user(manager, "200", "100") is True`
+  - `assert "200" not in active_recipient_chat_ids(manager)`
+- `test_owner_only_admin_management`
+  - `assert add_admin(manager, "200", "100") is True`
+  - `assert is_admin(manager, "200")`
+  - `with pytest.raises(PermissionError):`
+  - `assert remove_admin(manager, "200", "100") is True`
+  - `assert is_admin(manager, "200") is False`
+  - `assert remove_admin(manager, "100", "100") is False`
+- `test_admin_can_create_revoke_codes_and_kick_users`
+  - `assert revoke_access_code(manager, code, "200") is True`
+  - `assert kick_user(manager, "300", "200") is True`
+- `test_admin_cannot_kick_another_admin`
+  - `assert kick_user(manager, "300", "200") is False`
+  - `assert is_admin(manager, "300") is True`
+
+## tests/test_analyze_optimization.py
+- `test_classify_tiers`
+  - `assert classify_tier(row(validation_trades=2, validation_win_rate=100.0)) == "TINY_SAMPLE_TRAP"`
+  - `assert classify_tier(row()) == "PRACTICAL_REVIEW"`
+  - `assert classify_tier(row(validation_trades=30, validation_win_rate=55.0, validation_top_symbol_trade_share=0.5)) == "ACCEPTED"`
+  - `assert classify_tier(row(validation_win_rate=45.0)) == "REJECTED"`
+- `test_practical_score_prefers_better_candidate`
+  - `assert practical_score(better) > practical_score(worse)`
+- `test_load_results_multi_file`
+  - `assert len(loaded) == 2`
+  - `assert set(loaded["source_file"]) == {"first.csv", "second.csv"}`
+- `test_generate_report_mentions_tiny_sample_rejection`
+  - `assert "Tiny-sample traps" in report`
+  - `assert "validation_trades < 8" in report`
+  - `assert "TOP PRACTICAL CANDIDATES" in report`
+- `test_candidate_config_generation`
+  - `assert config["watchlist"] == ["BTCUSDT", "ETHUSDT", "SOLUSDT"]`
+  - `assert config["strategy"]["volume_spike_threshold"] == 1.5`
+  - `assert config["bot"]["cooldown_hours"] == 4`
+  - `assert "candidate_note" in config`
+  - `assert write_candidate_config(analyzed, output, base_config) is True`
+  - `assert output.exists()`
+
+## tests/test_compare_strategies.py
+- `test_combine_results_drops_strategy_b_conflict_with_strategy_a`
+  - `assert len(combined) == 2`
+  - `assert len(conflicts) == 1`
+  - `assert {item.signal.symbol for item in combined} == {"BTCUSDT", "ETHUSDT"}`
+- `test_combine_results_strategy_c_takes_priority`
+  - `assert {item.signal.strategy_name for item in combined} == {"strategy_c_fvg_breaker_4h"}`
+  - `assert len(conflicts) == 2`
+
+## tests/test_data_fetcher.py
+- `test_fetch_klines_orders_and_caches`
+  - `assert list(df["close"]) == [10.5, 11.5]`
+  - `assert pd.api.types.is_datetime64_any_dtype(df["timestamp"])`
+  - `assert (tmp_path / "BTCUSDT_15.csv").exists()`
+  - `assert len(calls) == 1`
+  - `assert calls[0][0][0] == "https://example.test/v5/market/kline"`
+  - `assert len(calls) == 1`
+  - `assert list(cached["open"]) == [10.0, 11.0]`
+- `test_cache_only_raises_when_cache_missing`
+  - `with pytest.raises(data_fetcher.CacheDataError):`
+- `test_import_klines_csv_normalizes_to_cache`
+  - `assert list(imported["close"]) == [10.5, 11.5]`
+  - `assert (tmp_path / "cache" / "BTCUSDT_15.csv").exists()`
+- `test_fetch_recent_klines_bypasses_cache`
+  - `assert list(df["close"]) == [11.5]`
+- `test_fetch_recent_klines_retries_rate_limit`
+  - `assert list(df["close"]) == [11.5]`
+  - `assert sleeps == [data_fetcher.RATE_LIMIT_SLEEP_SECONDS]`
+- `test_fetch_recent_klines_retries_request_exception`
+  - `assert list(df["close"]) == [11.5]`
+  - `assert calls["count"] == 2`
+  - `assert sleeps == [data_fetcher.RATE_LIMIT_SLEEP_SECONDS]`
+
+## tests/test_ict_patterns.py
+- `test_bullish_fvg_detected`
+  - `assert fvgs[0]["type"] == "bullish"`
+  - `assert fvgs[0]["zone"] == (100.0, 101.0)`
+- `test_bearish_fvg_detected`
+  - `assert fvgs[0]["type"] == "bearish"`
+  - `assert fvgs[0]["zone"] == (100.0, 102.0)`
+- `test_fvg_below_min_size_rejected`
+  - `assert detect_fvgs(df, 3, pd.Series([1.0] * 4), min_gap_atr_multiplier=0.2) == []`
+- `test_fvg_expired_after_48_candles`
+  - `assert detect_fvgs(frame(rows), 51, pd.Series([1.0] * len(rows)), max_age_candles=48) == []`
+- `test_fvg_filled_when_price_closes_through`
+  - `assert detect_fvgs(df, 3, pd.Series([1.0] * 4)) == []`
+  - `assert marked[0]["filled"] is True`
+- `test_fvg_no_lookahead`
+  - `assert detect_fvgs(df, 2, atr) == []`
+  - `assert len(detect_fvgs(df, 3, atr)) == 1`
+- `test_bullish_breaker_detected`
+  - `assert breaker["zone"] == (102.0, 104.0)`
+- `test_bearish_breaker_detected`
+  - `assert breaker["zone"] == (101.0, 104.0)`
+- `test_breaker_not_confirmed_too_early`
+  - `assert detect_breaker_block(breaker_frame("bullish"), 8, pd.Series([1.0] * 16), "bullish") is None`
+- `test_breaker_confirmed_after_3_candles`
+  - `assert detect_breaker_block(breaker_frame("bullish"), 9, pd.Series([1.0] * 16), "bullish") is not None`
+- `test_breaker_expired_after_96_candles`
+  - `assert detect_breaker_block(df, 110, pd.Series([1.0] * len(df)), "bullish", max_age_candles=96) is None`
+- `test_breaker_mitigated_after_close_through`
+  - `assert detect_breaker_block(df, 10, pd.Series([1.0] * 16), "bullish") is None`
+- `test_zone_helpers`
+  - `assert zones_overlap((100, 110), (105, 115)) is True`
+  - `assert zones_overlap((100, 105), (110, 115)) is False`
+  - `assert overlap_zone((100, 110), (105, 115)) == (105, 110)`
+  - `assert is_price_in_zone(107, (105, 110)) is True`
+- `test_confluence_zone_correct_range`
+  - `assert find_confluence_zone(breaker, fvgs, "bullish") == (105, 110)`
+  - `assert find_confluence_zone(breaker, fvgs, "bearish") is None`
+
+## tests/test_indicators.py
+- `test_ema_simple_series`
+  - `assert abs(result.iloc[-1] - 14.1756) < 0.01`
+- `test_rsi_overbought`
+  - `assert result.iloc[-1] > 99`
+- `test_rsi_oversold`
+  - `assert result.iloc[-1] < 1`
+- `test_atr_known_values`
+  - `assert abs(result.iloc[-1] - 2.3704) < 0.01`
+- `test_volume_sma`
+  - `assert result.iloc[-1] == 4.0`
+- `test_ema_slope_direction`
+  - `assert result.iloc[-1] > 0`
+
+## tests/test_main.py
+- `test_load_environment_reads_workspace_and_project_env`
+  - `assert os.environ["TELEGRAM_BOT_TOKEN"] == "project"`
+  - `assert os.environ["TELEGRAM_CHAT_ID"] == "123"`
+- `test_main_quiets_urllib3_connectionpool_logger`
+  - `assert logging.getLogger("urllib3.connectionpool").level == logging.ERROR`
+
+## tests/test_optimize.py
+- `test_build_symbol_sets_quarantines_weak_symbols`
+  - `assert sets["all_symbols"] == ["BTCUSDT", "ADAUSDT", "DOGEUSDT", "ETHUSDT"]`
+  - `assert sets["quarantine_weak"] == ["BTCUSDT", "ETHUSDT"]`
+- `test_walk_forward_bounds_uses_shared_range`
+  - `assert start == timestamps[1]`
+  - `assert end == timestamps[-1]`
+  - `assert start < split < end`
+- `test_metrics_and_acceptance`
+  - `assert round(metrics.win_rate, 1) == 66.7`
+  - `assert metrics.max_consecutive_losses == 1`
+  - `assert candidate_accepted(accepted) is True`
+  - `assert candidate_accepted(rejected) is False`
+- `test_score_candidate_prefers_better_validation`
+  - `assert score_candidate(train, better) > score_candidate(train, worse)`
+- `test_prepared_evaluation_matches_normal_strategy`
+  - `assert [(s.direction, s.timestamp, s.entry, s.confidence) for s in prepared] == [`
+  - `assert [(s.direction, s.timestamp, s.entry, s.confidence) for s in candidate_signals] == [`
+- `test_fast_simulation_matches_normal_simulation`
+  - `assert [(r.outcome, r.pnl_r, r.bars_held) for r in fast] == [`
+
+## tests/test_optimize_strategy_b.py
+- `test_strategy_b_metrics_and_acceptance`
+  - `assert metrics.trades == 2`
+  - `assert metrics.trades_per_week == 2`
+  - `assert metrics.win_rate == 50`
+  - `assert candidate_accepted(accepted) is True`
+  - `assert candidate_accepted(rejected) is False`
+- `test_strategy_b_score_prefers_positive_validation`
+  - `assert score_candidate(train, better) > score_candidate(train, worse)`
+- `test_strategy_b_walk_forward_bounds`
+  - `assert start == timestamps[1]`
+  - `assert end == timestamps[-1]`
+  - `assert start < split < end`
+- `test_strategy_b_strict_grid_is_more_selective_than_default`
+  - `assert strict["swing_lookback"] > default["swing_lookback"]`
+  - `assert strict["cooldown_hours"] > default["cooldown_hours"]`
+- `test_fast_candidate_evaluation_returns_strategy_b_signal`
+  - `assert len(signals) == 1`
+  - `assert signals[0].strategy_name == "strategy_b_daily_momentum"`
+
+## tests/test_preflight.py
+- `test_require_env_rejects_missing_secrets`
+  - `with pytest.raises(RuntimeError, match="TELEGRAM_BOT_TOKEN"):`
+- `test_run_preflight_no_scan`
+  - `assert exit_code == 0`
+  - `assert "env: OK" in output`
+  - `assert "bybit: OK" in output`
+  - `assert "scan_once" not in output`
+  - `assert "secret-token" not in output`
+- `test_run_preflight_scan_and_send`
+  - `assert exit_code == 0`
+  - `assert "scan_once: OK (2 latest-candle signals)" in output`
+  - `assert "telegram send: OK" in output`
+  - `assert sent_messages == [`
+- `test_run_preflight_fails_when_bybit_check_fails`
+  - `assert await run_preflight(scan=False) == 1`
+
+## tests/test_report.py
+- `test_confidence_bucket`
+  - `assert confidence_bucket(100) == "95-100"`
+  - `assert confidence_bucket(87) == "85-94"`
+  - `assert confidence_bucket(60) == "55-64"`
+- `test_summarize_by_confidence_condition`
+  - `assert summary["strong_volume"][0] == 1`
+  - `assert "atr_expanding" not in summary`
+- `test_generate_report_includes_diagnostics`
+  - `assert "--- BY DIRECTION ---" in report`
+  - `assert "--- BY CONFIDENCE SCORE BUCKET ---" in report`
+  - `assert "--- BY CONFIDENCE CONDITION TRUE ---" in report`
+  - `assert output.exists()`
+- `test_generate_report_b_includes_acceptance`
+  - `assert "--- STRATEGY B ACCEPTANCE ---" in report`
+  - `assert "Verdict:" in report`
+  - `assert output.exists()`
+- `test_generate_report_c_includes_acceptance`
+  - `assert "--- STRATEGY C ACCEPTANCE ---" in report`
+  - `assert "Verdict:" in report`
+  - `assert output.exists()`
+- `test_generate_comparison_report_includes_verdict`
+  - `assert "STRATEGY COMPARISON REPORT" in report`
+  - `assert "Conflicts detected: 1" in report`
+  - `assert "Strategy C" in report`
+  - `assert "Combined improvement over A alone" in report`
+
+## tests/test_resample.py
+- `test_resample_15m_to_30m_ohlcv`
+  - `assert len(result) == 2`
+  - `assert result.iloc[0]["open"] == 1.0`
+  - `assert result.iloc[0]["high"] == 3.0`
+  - `assert result.iloc[0]["low"] == 0.5`
+  - `assert result.iloc[0]["close"] == 2.5`
+  - `assert result.iloc[0]["volume"] == 30.0`
+
+## tests/test_roi.py
+- `test_required_price_move_at_5x`
+  - `assert required_price_move_pct(100, 5) == 20`
+  - `assert roi_target_price(100, "LONG", 100, 5) == 120`
+  - `assert roi_target_price(100, "SHORT", 100, 5) == 80`
+- `test_long_roi_tiers_detected`
+  - `assert result.reached_tiers[100] is True`
+  - `assert result.reached_tiers[200] is True`
+  - `assert result.max_favorable_roi_pct == 205.0`
+- `test_short_roi_tiers_detected`
+  - `assert result.reached_tiers[100] is True`
+  - `assert result.reached_tiers[200] is True`
+  - `assert result.max_favorable_roi_pct == 200.0`
+- `test_roi_label_for_highest_tier`
+  - `assert roi_label_for_tiers({100: True, 200: True, 300: False, 400: False, 500: False}) == "ROI200_STRETCH"`
+  - `assert roi_label_for_tiers({100: True, 200: True, 300: True, 400: True, 500: True}) == "ROI500_EXTREME"`
+- `test_impossible_short_target_rejected`
+  - `with pytest.raises(ValueError):`
+- `test_roi_report_includes_hit_rates`
+  - `assert metrics.roi100_hit_rate == 100`
+  - `assert "+100% ROI hit rate" in report`
+  - `assert "MFE" not in report`
+  - `assert output.exists()`
+
+## tests/test_rr_experiment.py
+- `test_adjusted_signal_moves_tp2_to_target_rr`
+  - `assert signal.tp2 == 110.0`
+  - `assert signal.risk_reward == 5.0`
+- `test_structure_extension_candidate_requires_quality_conditions`
+  - `assert is_structure_extension_candidate(make_signal())`
+  - `assert not is_structure_extension_candidate(make_signal(confidence=80))`
+  - `assert not is_structure_extension_candidate(make_signal(conditions={"trend_rsi_strong": True}))`
+- `test_apply_scenario_keeps_base_when_predicate_false`
+  - `assert signals[0].risk_reward == 3.0`
+  - `assert signals[0].tp2 == 106.0`
+
+## tests/test_run_backtest.py
+- `test_parse_args_accepts_config`
+  - `assert args.config == "candidate_config.yaml"`
+  - `assert args.symbols == ["BTCUSDT"]`
+
+## tests/test_scanner.py
+- `test_next_scan_delay_seconds`
+  - `assert next_scan_delay_seconds(now) == 450`
+- `test_scan_once_enqueues_signals`
+  - `assert emitted == 1`
+  - `assert (await async_queue.get()).symbol == "BTCUSDT"`
+- `test_scan_once_paces_between_recent_fetches`
+  - `assert await scan_once(async_queue, config) == 0`
+  - `assert sleeps == [1.5, 1.5, 1.5]`
+- `test_scan_once_enqueues_strategy_b_when_enabled`
+  - `assert emitted == 1`
+  - `assert (await async_queue.get()).strategy_name == "strategy_b_fvg_breaker_15m"`
+- `test_strategy_b_conflicts_with_nearby_strategy_a_signal`
+  - `assert strategy_conflicts_with_a(strategy_b, strategy_a) is True`
+
+## tests/test_simulator.py
+- `test_tp2_hit_returns_correct_r`
+  - `assert result.outcome == "TP2_HIT"`
+  - `assert result.pnl_r == 2.167`
+- `test_stop_hit_returns_minus_one_r`
+  - `assert result.outcome == "STOP_HIT"`
+  - `assert result.pnl_r == -1.0`
+- `test_tp1_then_stop_returns_breakeven`
+  - `assert result.outcome == "TP1_ONLY"`
+  - `assert result.pnl_r == 0.667`
+- `test_tp2_r_scales_with_larger_target`
+  - `assert result.outcome == "TP2_HIT"`
+  - `assert result.pnl_r == 5.667`
+- `test_tp2_uses_configured_position_split`
+  - `assert result.outcome == "TP2_HIT"`
+  - `assert result.pnl_r == 2.333`
+- `test_open_trade_after_96_bars`
+  - `assert result.outcome == "OPEN"`
+  - `assert result.bars_held == 96`
+
+## tests/test_state_manager.py
+- `test_state_manager_saves_and_loads`
+  - `assert reloaded.state.signals_today == 3`
+  - `assert reloaded.state.last_signal == {"message": "hello"}`
+- `test_state_manager_cooldown`
+  - `assert manager.is_on_cooldown("BTCUSDT", "LONG") is False`
+  - `assert manager.is_on_cooldown("BTCUSDT", "LONG") is True`
+- `test_state_manager_save_warning`
+  - `assert "Could not save bot state" in caplog.text`
+
+## tests/test_strategy.py
+- `test_confidence_score_max`
+  - `assert score == 100`
+  - `assert label == "STRONG"`
+- `test_confidence_score_partial`
+  - `assert score == 65`
+  - `assert label == "MODERATE"`
+- `test_no_signal_in_sideways_market`
+  - `assert evaluate_signals("BTCUSDT", df_15m, df_1h) == []`
+- `test_long_signal_all_conditions_met`
+  - `assert len(signals) == 1`
+  - `assert signals[0].direction == "LONG"`
+  - `assert signals[0].confidence_conditions["strong_volume"] is True`
+  - `assert "trend_rsi_strong" in signals[0].confidence_conditions`
+- `test_high_confidence_signal_extends_target_to_5r`
+  - `assert signal.confidence == 100`
+  - `assert signal.risk_reward == 5.0`
+  - `assert signal.target_rr == 5.0`
+  - `assert signal.tp2 == signal.entry + abs(signal.entry - signal.stop_loss) * 5.0`
+  - `assert "Extended target" in signal.target_note`
+- `test_lower_confidence_signal_keeps_base_target`
+  - `assert signal.confidence == 85`
+  - `assert signal.risk_reward == 3.0`
+  - `assert signal.target_rr == 3.0`
+  - `assert "Base target" in signal.target_note`
+- `test_short_signal_all_conditions_met`
+  - `assert len(signals) == 1`
+  - `assert signals[0].direction == "SHORT"`
+- `test_cooldown_suppresses_duplicate`
+  - `assert len(signals) == 1`
+- `test_volatility_filter_rejects_wide_atr`
+  - `assert signals == []`
+- `test_signal_event_dataclass_importable`
+  - `assert SignalEvent.__name__ == "SignalEvent"`
+
+## tests/test_strategy_b.py
+- `test_long_signal_all_conditions_met`
+  - `assert len(signals) == 1`
+  - `assert signals[0].direction == "LONG"`
+- `test_short_signal_all_conditions_met`
+  - `assert len(signals) == 1`
+  - `assert signals[0].direction == "SHORT"`
+- `test_no_signal_bearish_1h_trend_on_long_setup`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg()) == []`
+- `test_no_signal_no_confluence_zone`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg()) == []`
+- `test_no_signal_price_did_not_wick_into_zone`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg()) == []`
+- `test_no_signal_candle_closed_below_zone_low`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg()) == []`
+- `test_no_signal_rsi_falling_on_long`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg()) == []`
+- `test_no_signal_weak_candle_body`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg()) == []`
+- `test_no_signal_bad_atr`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg()) == []`
+- `test_no_signal_rr_below_minimum`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg(tp2_risk_multiplier=1.0)) == []`
+- `test_cooldown_blocks_same_direction`
+  - `assert len(signals) == 1`
+- `test_confidence_all_conditions_true`
+  - `assert score == 100`
+  - `assert label == "STRONG"`
+- `test_confidence_partial_score`
+  - `assert score == 40`
+  - `assert label == "LOW"`
+- `test_strategy_name_is_strategy_b`
+  - `assert evaluate_signals_b("BTCUSDT", df, trend, cfg=cfg())[0].strategy_name == STRATEGY_NAME`
+
+## tests/test_strategy_c.py
+- `test_long_signal_all_conditions_met`
+  - `assert len(signals) == 1`
+  - `assert signals[0].direction == "LONG"`
+- `test_short_signal_all_conditions_met`
+  - `assert len(signals) == 1`
+  - `assert signals[0].direction == "SHORT"`
+- `test_no_signal_flat_4h_ema`
+  - `assert evaluate_signals_c("BTCUSDT", frame("LONG", ema21=100.0, ema55=100.0), cfg=cfg()) == []`
+- `test_no_signal_no_confluence_zone`
+  - `assert evaluate_signals_c("BTCUSDT", frame("LONG"), cfg=cfg()) == []`
+- `test_no_signal_rsi_overbought`
+  - `assert evaluate_signals_c("BTCUSDT", frame("LONG", rsi14=75.0), cfg=cfg()) == []`
+- `test_no_signal_rr_below_3`
+  - `assert evaluate_signals_c("BTCUSDT", frame("LONG"), cfg=cfg(tp2_risk_multiplier=2.0)) == []`
+- `test_no_signal_weak_candle_body`
+  - `assert evaluate_signals_c("BTCUSDT", frame("LONG", open=101.8), cfg=cfg()) == []`
+- `test_cooldown_12h_blocks_second_signal`
+  - `assert len(evaluate_signals_c("BTCUSDT", data, cfg=cfg())) == 1`
+- `test_cooldown_12h_allows_after_expiry`
+  - `assert len(evaluate_signals_c("BTCUSDT", data, cfg=cfg())) == 2`
+- `test_confidence_all_conditions_true`
+  - `assert score == 100`
+  - `assert label == "STRONG"`
+- `test_tp2_carries_60_pct_position`
+  - `assert signal.tp1_position_pct == 0.40`
+  - `assert signal.tp2_position_pct == 0.60`
+- `test_strategy_name_is_strategy_c`
+  - `assert signal.strategy_name == STRATEGY_NAME`
+
+## tests/test_telegram_client.py
+- `test_telegram_run_requires_secrets`
+  - `with pytest.raises(RuntimeError, match="TELEGRAM_BOT_TOKEN"):`
+- `test_run_can_disable_command_polling`
+  - `assert calls == ["consume"]`
+- `test_run_enables_command_polling_by_default`
+  - `assert calls == ["consume", "poll"]`
+- `test_sanitize_telegram_error_redacts_bot_token`
+  - `assert "SECRET" not in sanitized`
+  - `assert "/bot<redacted>/getUpdates" in sanitized`
+- `test_get_updates_uses_short_polling_post_and_advances_offset`
+  - `assert updates[0]["update_id"] == 10`
+  - `assert client.offset == 11`
+  - `assert calls == [`
+- `test_telegram_client_mounts_retry_adapters`
+  - `assert https_adapter.max_retries.total == 3`
+  - `assert https_adapter.max_retries.connect == 3`
+- `test_consume_signals_requeues_on_send_failure`
+  - `assert queue.qsize() == 1`
+  - `assert manager.state.last_signal is None`
+- `test_consume_signals_broadcasts_to_active_admin_and_user`
+  - `assert ("100", "signal") in sent`
+  - `assert ("200", "signal") in sent`
+  - `assert manager.state.signals_today == 1`
+- `test_poll_commands_backs_off_on_failure`
+  - `with pytest.raises(asyncio.CancelledError):`
+  - `assert sleeps == [5]`
+- `test_handle_command_denies_unauthorized_status`
+  - `assert sent == [("200", "Access denied. Ask an admin for a one-time access code.")]`
+- `test_handle_command_start_activates_user`
+  - `assert manager.state.users["200"]["active"] is True`
+  - `assert "Access granted" in sent[-1][1]`
+- `test_handle_command_start_for_owner_does_not_request_code`
+  - `assert sent == [("100", "You are already authorized as owner. Use /menu to see available commands.")]`
+- `test_handle_command_start_for_active_user_does_not_request_code`
+  - `assert sent == [("200", "Access already active. You will receive signals.")]`
+- `test_handle_command_private_chat_owner_id_can_differ_from_user_id`
+  - `assert sent[-1].startswith("Access code created:")`
+- `test_handle_command_group_chat_owner_id_does_not_grant_user_admin`
+  - `assert sent == ["Access denied. Ask an admin for a one-time access code."]`
+- `test_handle_command_menu_for_unauthorized_user_shows_public_commands`
+  - `assert "/start CODE" in sent[-1]`
+  - `assert "/status" in sent[-1]`
+  - `assert "/code_create" not in sent[-1]`
+- `test_handle_command_menu_for_admin_shows_admin_commands`
+  - `assert "/code_create" in sent[-1]`
+  - `assert "/admin_add" in sent[-1]`
+- `test_handle_command_help_aliases_menu`
+  - `assert sent[-1].startswith("🤖 Bot menu")`
+- `test_handle_command_id_shows_ids_and_role`
+  - `assert "Your user ID: 999" in sent[-1]`
+  - `assert "This chat ID: 100" in sent[-1]`
+  - `assert "Role: owner" in sent[-1]`
+- `test_handle_command_authorized_status`
+  - `assert "Bot online" in sent[0]`
+- `test_handle_admin_code_and_user_commands`
+  - `assert generated_code in sent[-1]`
+  - `assert sent[-1] == "Code revoked."`
+  - `assert "200" in sent[-1]`
+  - `assert sent[-1] == "User kicked."`
+- `test_handle_owner_admin_commands_and_non_owner_denial`
+  - `assert sent[-1] == "Admin added."`
+  - `assert sent[-1] == "Owner only."`
+  - `assert "200" in sent[-1]`
+  - `assert sent[-1] == "Admin removed."`
+
+## tests/test_telegram_formatter.py
+- `test_format_signal_contains_key_levels`
+  - `assert "🟢 LONG SETUP - BTCUSDT" in message`
+  - `assert "🎯 Entry:" in message`
+  - `assert "🏁 TP2:" in message`
+  - `assert "Extended target 1:5.00" in message`
+  - `assert "🧠 Strategy: A+ Trend Pullback" in message`
+  - `assert "🔥 Confidence: 90/100 [STRONG]" in message`
+  - `assert "https://www.tradingview.com/chart/?symbol=BYBIT:BTCUSDT.P" in message`
+  - `assert "Not financial advice" in message`
+- `test_format_signal_labels_strategy_b`
+  - `assert "🧠 Strategy: Daily Momentum Continuation" in message`
+  - `assert "⏱️ Timeframes: 15m momentum breakout" in message`
+- `test_format_status_and_watchlist`
+  - `assert "👀 Watching: 2 symbols" in status`
+  - `assert "🟢 BTCUSDT: Bullish" in format_watchlist({"BTCUSDT": "Bullish"})`
+

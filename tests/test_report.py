@@ -5,6 +5,7 @@ from backtest.report import (
     generate_comparison_report,
     generate_report,
     generate_report_b,
+    generate_report_c,
     summarize_by_confidence_condition,
 )
 from backtest.simulator import TradeResult
@@ -72,6 +73,21 @@ def test_generate_report_b_includes_acceptance(tmp_path):
     assert output.exists()
 
 
+def test_generate_report_c_includes_acceptance(tmp_path):
+    output = tmp_path / "strategy_c.txt"
+    report = generate_report_c(
+        [make_result(pnl_r=1.0) for _ in range(80)],
+        "2026-01-01",
+        "2026-07-01",
+        ["BTCUSDT"],
+        days=180,
+        output_path=output,
+    )
+    assert "--- STRATEGY C ACCEPTANCE ---" in report
+    assert "Verdict:" in report
+    assert output.exists()
+
+
 def test_generate_comparison_report_includes_verdict(tmp_path):
     output = tmp_path / "comparison.txt"
     results_a = [make_result() for _ in range(30)]
@@ -79,6 +95,7 @@ def test_generate_comparison_report_includes_verdict(tmp_path):
     report = generate_comparison_report(
         results_a,
         results_b,
+        [],
         results_a + results_b,
         [("BTCUSDT", pd.Timestamp("2026-01-01T00:00:00Z"), pd.Timestamp("2026-01-01T00:30:00Z"))],
         "2026-01-01",
@@ -88,4 +105,5 @@ def test_generate_comparison_report_includes_verdict(tmp_path):
     )
     assert "STRATEGY COMPARISON REPORT" in report
     assert "Conflicts detected: 1" in report
+    assert "Strategy C" in report
     assert "Combined improvement over A alone" in report

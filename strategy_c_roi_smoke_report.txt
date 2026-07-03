@@ -1,0 +1,19 @@
+=== ROI REPORT: Strategy C ROI best candidate ===
+Leverage: 5.0x
+Qualified signals: 0
++100% ROI hit rate: 0.0%
++200% ROI hit rate: 0.0%
+Expectancy proxy: 0.00R total | 0.00R avg
+Max consecutive ROI100 failures: 0
+Average bars to ROI100: 0.0
+
+--- ROI TIERS ---
++100% ROI: 0 (0.0%)
++200% ROI: 0 (0.0%)
++300% ROI: 0 (0.0%)
++400% ROI: 0 (0.0%)
++500% ROI: 0 (0.0%)
+
+--- BY SYMBOL ---
+
+--- FAILED ROI100 SETUPS (last 20) ---

@@ -67,6 +67,17 @@ def test_tp2_r_scales_with_larger_target():
     assert result.pnl_r == 5.667
 
 
+def test_tp2_uses_configured_position_split():
+    signal = make_signal()
+    signal.tp1_position_pct = 0.40
+    signal.tp2_position_pct = 0.60
+
+    result = simulate_trade(signal, candles([(100, 105, 99, 104)]))
+
+    assert result.outcome == "TP2_HIT"
+    assert result.pnl_r == 2.333
+
+
 def test_open_trade_after_96_bars():
     result = simulate_trade(make_signal(), candles([(100, 101, 99, 100.5)] * 100))
     assert result.outcome == "OPEN"

@@ -55,16 +55,39 @@ def strategy_b_acceptance(results: list[TradeResult], days: int) -> tuple[bool, 
     failures = []
     if trades_week < 2.5 or trades_week > 9:
         failures.append(f"trades/week {trades_week:.2f} outside 2.5-9")
-    if win_rate < 40:
-        failures.append(f"win rate {win_rate:.1f}% < 40%")
+    if count < 30:
+        failures.append(f"signals {count} < 30")
+    if win_rate < 45:
+        failures.append(f"win rate {win_rate:.1f}% < 45%")
     if total_r <= 0:
         failures.append(f"total R {total_r:.2f} <= 0")
     if avg_r <= 0:
         failures.append(f"avg R {avg_r:.2f} <= 0")
-    if max_losses > 6:
-        failures.append(f"max consecutive losses {max_losses} > 6")
+    if max_losses > 7:
+        failures.append(f"max consecutive losses {max_losses} > 7")
     if top_share > 0.60:
         failures.append(f"top symbol share {top_share:.2f} > 0.60")
+    return not failures, failures
+
+
+def strategy_c_acceptance(results: list[TradeResult], days: int) -> tuple[bool, list[str]]:
+    count, win_rate, avg_r = _group_metrics(results)
+    trades_week = _trades_per_week(results, days)
+    total_r = _total_r(results)
+    max_losses = _max_consecutive_losses(results)
+    failures = []
+    if count < 15:
+        failures.append(f"signals {count} < 15")
+    if trades_week < 2 or trades_week > 6:
+        failures.append(f"trades/week {trades_week:.2f} outside 2-6")
+    if win_rate < 55:
+        failures.append(f"win rate {win_rate:.1f}% < 55%")
+    if total_r <= 0:
+        failures.append(f"total R {total_r:.2f} <= 0")
+    if avg_r <= 0.5:
+        failures.append(f"avg R {avg_r:.2f} <= 0.5")
+    if max_losses > 5:
+        failures.append(f"max consecutive losses {max_losses} > 5")
     return not failures, failures
 
 
@@ -75,14 +98,14 @@ def combined_acceptance(results_a: list[TradeResult], combined: list[TradeResult
     total_r_a = _total_r(results_a)
     total_r_combined = _total_r(combined)
     failures = []
-    if trades_week_combined < trades_week_a + 2:
-        failures.append(f"combined trades/week {trades_week_combined:.2f} not at least A + 2")
+    if trades_week_combined < trades_week_a + 3:
+        failures.append(f"combined trades/week {trades_week_combined:.2f} not at least A + 3")
     if total_r_combined < total_r_a:
         failures.append(f"combined total R {total_r_combined:.2f} < A total R {total_r_a:.2f}")
     if avg_r <= 0:
         failures.append(f"combined avg R {avg_r:.2f} <= 0")
-    if win_rate < 38:
-        failures.append(f"combined win rate {win_rate:.1f}% < 38%")
+    if win_rate < 42:
+        failures.append(f"combined win rate {win_rate:.1f}% < 42%")
     return not failures, failures
 
 
@@ -240,6 +263,30 @@ def generate_report_b(
     return full_report
 
 
+def generate_report_c(
+    results: list[TradeResult],
+    start_date: str,
+    end_date: str,
+    symbols: list[str],
+    days: int,
+    output_path: str | Path = "strategy_c_report.txt",
+) -> str:
+    """Print and save a Strategy C report with acceptance verdict."""
+    report = generate_report(results, symbols, start_date, end_date, output_path=output_path)
+    passed, failures = strategy_c_acceptance(results, days)
+    verdict = [
+        "",
+        "--- STRATEGY C ACCEPTANCE ---",
+        f"Trades/week: {_trades_per_week(results, days):.2f}",
+        f"Verdict: {'PASS' if passed else 'FAIL'}",
+        f"Reason: {'All Strategy C gates passed.' if passed else '; '.join(failures)}",
+    ]
+    full_report = report + "\n" + "\n".join(verdict)
+    Path(output_path).write_text(full_report + "\n", encoding="utf-8")
+    print("\n".join(verdict))
+    return full_report
+
+
 def _summary_line(label: str, results: list[TradeResult], days: int) -> str:
     count, win_rate, avg_r = _group_metrics(results)
     return (
@@ -260,6 +307,7 @@ def _symbol_concentration(results: list[TradeResult]) -> str:
 def generate_comparison_report(
     results_a: list[TradeResult],
     results_b: list[TradeResult],
+    results_c: list[TradeResult] | None,
     combined_results: list[TradeResult],
     conflicts: list[tuple],
     start_date: str,
@@ -267,8 +315,10 @@ def generate_comparison_report(
     days: int,
     output_path: str | Path = "strategy_comparison_report.txt",
 ) -> str:
-    """Print and save Strategy A/B comparison report."""
+    """Print and save Strategy A/B/C comparison report."""
+    results_c = results_c or []
     passed_b, failures_b = strategy_b_acceptance(results_b, days)
+    passed_c, failures_c = strategy_c_acceptance(results_c, days)
     passed_combined, failures_combined = combined_acceptance(results_a, combined_results, days)
     delta_trades = _trades_per_week(combined_results, days) - _trades_per_week(results_a, days)
     delta_r = _total_r(combined_results) - _total_r(results_a)
@@ -280,18 +330,23 @@ def generate_comparison_report(
         "-" * 72,
         _summary_line("Strategy A", results_a, days),
         _summary_line("Strategy B", results_b, days),
+        _summary_line("Strategy C", results_c, days),
         _summary_line("Combined", combined_results, days),
         "-" * 72,
-        f"Conflicts detected: {len(conflicts)} (Strategy A took priority in all cases)",
+        f"Conflicts detected: {len(conflicts)}",
+        "Priority order: Strategy C > Strategy A > Strategy B",
         "",
         "--- SYMBOL CONCENTRATION ---",
         f"Strategy A: {_symbol_concentration(results_a)}",
         f"Strategy B: {_symbol_concentration(results_b)}",
+        f"Strategy C: {_symbol_concentration(results_c)}",
         f"Combined: {_symbol_concentration(combined_results)}",
         "",
         "--- VERDICT ---",
         f"Strategy B acceptance: {'PASS' if passed_b else 'FAIL'}",
         f"Strategy B reason: {'All Strategy B gates passed.' if passed_b else '; '.join(failures_b)}",
+        f"Strategy C acceptance: {'PASS' if passed_c else 'FAIL'}",
+        f"Strategy C reason: {'All Strategy C gates passed.' if passed_c else '; '.join(failures_c)}",
         f"Combined acceptance: {'PASS' if passed_combined else 'FAIL'}",
         f"Combined reason: {'All combined gates passed.' if passed_combined else '; '.join(failures_combined)}",
         f"Combined improvement over A alone: {delta_trades:+.2f} trades/week | R delta: {delta_r:+.2f}",
