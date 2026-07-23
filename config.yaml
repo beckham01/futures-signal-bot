@@ -102,8 +102,8 @@ strategy_b:
   breaker_confirm_candles: 3
   breaker_max_age_candles: 96
   sl_atr_buffer: 0.3
-  tp1_risk_multiplier: 1.5
-  tp2_risk_multiplier: 2.5
+  tp1_risk_multiplier: 1.0
+  tp2_risk_multiplier: 2.0
   min_risk_reward: 2.0
   min_confidence: 50
   candle_body_min_pct: 0.40
@@ -135,11 +135,11 @@ strategy_c:
   breaker_confirm_candles: 3
   breaker_max_age_candles: 96
   sl_atr_buffer: 0.5
-  tp1_risk_multiplier: 2.0
-  tp2_risk_multiplier: 4.0
+  tp1_risk_multiplier: 1.0
+  tp2_risk_multiplier: 2.0
   tp1_position_pct: 0.40
   tp2_position_pct: 0.60
-  min_risk_reward: 3.0
+  min_risk_reward: 2.0
   min_confidence: 60
   candle_body_min_pct: 0.45
   atr_max_pct: 0.06

@@ -17,11 +17,11 @@ def cfg(**overrides):
         "breaker_confirm_candles": 3,
         "breaker_max_age_candles": 96,
         "sl_atr_buffer": 0.5,
-        "tp1_risk_multiplier": 2.0,
-        "tp2_risk_multiplier": 4.0,
+        "tp1_risk_multiplier": 1.0,
+        "tp2_risk_multiplier": 2.0,
         "tp1_position_pct": 0.40,
         "tp2_position_pct": 0.60,
-        "min_risk_reward": 3.0,
+        "min_risk_reward": 2.0,
         "min_confidence": 60,
         "candle_body_min_pct": 0.45,
         "atr_max_pct": 0.06,
@@ -121,9 +121,9 @@ def test_no_signal_rsi_overbought(monkeypatch):
     assert evaluate_signals_c("BTCUSDT", frame("LONG", rsi14=75.0), cfg=cfg()) == []
 
 
-def test_no_signal_rr_below_3(monkeypatch):
+def test_no_signal_rr_below_2(monkeypatch):
     patch_confluence(monkeypatch)
-    assert evaluate_signals_c("BTCUSDT", frame("LONG"), cfg=cfg(tp2_risk_multiplier=2.0)) == []
+    assert evaluate_signals_c("BTCUSDT", frame("LONG"), cfg=cfg(tp2_risk_multiplier=1.0)) == []
 
 
 def test_no_signal_weak_candle_body(monkeypatch):
